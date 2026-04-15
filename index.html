@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>曦雅水晶設計助手</title>
+  <meta name="description" content="互動式水晶手鍊預覽設計工具，支援多種水晶選擇與客製化"/>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>"/>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── TOP BAR ─────────────────────────── -->
+  <header id="topbar">
+    <div id="logo" data-i18n="logo">曦雅水晶設計助手</div>
+
+    <!-- Wrist size -->
+    <div class="ctrl-group">
+      <span class="ctrl-label" data-i18n="wristLabel">手圍</span>
+      <input type="range" id="wristSlider" min="13" max="20" step="0.5" value="16"/>
+      <span class="ctrl-value" id="wristDisplay">16 cm / 6.3"</span>
+    </div>
+
+    <!-- Bead size -->
+    <div class="ctrl-group">
+      <span class="ctrl-label" data-i18n="beadLabel">珠子大小</span>
+      <select id="beadSizeSelect">
+        <option value="6">6 mm</option>
+        <option value="7">7 mm</option>
+        <option value="8" selected>8 mm</option>
+        <option value="9">9 mm</option>
+        <option value="10">10 mm</option>
+        <option value="11">11 mm</option>
+        <option value="12">12 mm</option>
+        <option value="13">13 mm</option>
+        <option value="14">14 mm</option>
+        <option value="15">15 mm</option>
+        <option value="16">16 mm</option>
+      </select>
+    </div>
+
+    <!-- Language toggle -->
+    <div id="langToggle" role="group" aria-label="Language selector">
+      <button class="lang-btn active" id="btnZh" onclick="setLang('zh')">中文</button>
+      <button class="lang-btn"        id="btnEn" onclick="setLang('en')">EN</button>
+    </div>
+  </header>
+
+  <!-- ── MAIN ───────────────────────────── -->
+  <div id="main">
+
+    <!-- Left hint panel + outside toggle tab -->
+    <div id="leftHintOuter">
+      <div id="leftHint">
+        <!-- Panel title row (always shown when expanded) -->
+        <div id="leftHintHeader">
+          <span class="lh-panel-title" data-i18n="guideTitle">使用指南</span>
+        </div>
+        <div class="lh-icon">💎</div>
+        <div class="lh-guide">
+          <div class="lh-guide-title" data-i18n="guideTitle">使用指南</div>
+          <div class="lh-step">
+            <span class="lh-step-num">①</span>
+            <span data-i18n="guideStep1">上方滑桿選擇<b>手圍尺寸</b>（13–20 cm）</span>
+          </div>
+          <div class="lh-step">
+            <span class="lh-step-num">②</span>
+            <span data-i18n="guideStep2">選擇<b>珠子大小</b>（6–16 mm）</span>
+          </div>
+          <div class="lh-step">
+            <span class="lh-step-num">③</span>
+            <span data-i18n="guideStep3">點擊右側<b>水晶</b>分類，選取水晶放入凹槽</span>
+          </div>
+          <div class="lh-step">
+            <span class="lh-step-num">④</span>
+            <span data-i18n="guideStep4">點擊右側<b>配飾</b>（純銀／合金／鋯石）加入飾品</span>
+          </div>
+          <div class="lh-step">
+            <span class="lh-step-num">⑤</span>
+            <span data-i18n="guideStep5"><b>拖曳</b>珠子可調整順序；<b>右鍵</b>可調整大小或移除</span>
+          </div>
+          <div class="lh-step">
+            <span class="lh-step-num">⑥</span>
+            <span data-i18n="guideStep6">盤面下方按鈕可<b>清除</b>全部珠子</span>
+          </div>
+        </div>
+      </div>
+      <!-- Toggle tab — always visible, right side of panel -->
+      <button id="leftToggleBtn" onclick="toggleLeftPanel()" title="收起使用指南">◁</button>
+    </div>
+
+    <!-- Stats panel: between guide and canvas, one crystal per row -->
+    <div id="statsPanel">
+      <div class="sp-header">
+        <span class="sp-title" data-i18n="statsTitle">已放置水晶</span>
+        <span class="sp-count" id="statsCount"></span>
+      </div>
+      <div id="beadStats"></div>
+    </div>
+
+    <!-- Preview canvas -->
+    <section id="canvasSection">
+      <div id="trayWrapper">
+        <div id="trayBg"></div>
+        <canvas id="braceletCanvas" width="440" height="440"></canvas>
+      </div>
+      <!-- Bottom zone: hint + clear button only (stats moved to side panel) -->
+      <div id="canvasBottom">
+        <div id="canvasHint" data-i18n="canvasHint">左鍵拖曳調整位置 · 右鍵調整大小或移除 · 停留顯示名稱</div>
+        <button id="clearTrayBtn" onclick="clearTray()">清除盤面</button>
+      </div>
+    </section>
+
+
+    <!-- Side panel -->
+    <aside id="sidePanel">
+      <!-- Categories injected by JS -->
+    </aside>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- Tooltip -->
+<div id="beadTooltip"></div>
+
+<!-- Context menu -->
+<div id="contextMenu">
+  <div id="contextMenuTitle" data-i18n="ctxTitle">珠子大小</div>
+  <div class="bead-name" id="ctxBeadName"></div>
+  <div class="size-row">
+    <input type="range" id="ctxSizeSlider" min="6" max="16" step="1" value="8"/>
+    <span class="size-val" id="ctxSizeVal">8 mm</span>
+  </div>
+  <button class="ctx-remove" id="ctxRemoveBtn" data-i18n="ctxRemove">✕ 移除此珠子</button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
