@@ -747,6 +747,46 @@ input[type=range]::-webkit-slider-thumb:active {
   font-family: 'Noto Serif TC', serif;
 }
 
+/* ─── Crystal Image Preview ───────────────────────────── */
+.crystal-img-wrap {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.crystal-img-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.crystal-text-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.crystal-effect {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  font-family: 'Noto Serif TC', serif;
+  font-weight: var(--fw-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crystal-item:hover .crystal-effect {
+  color: var(--text-secondary);
+}
+
 /* ─── Animations ───────────────────────────────────────── */
 @keyframes popIn {
   from { opacity: 0; transform: scale(0.92); }

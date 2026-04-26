@@ -1,6 +1,25 @@
 /* ══════════════════════════════════════════════════════════
-   Crystal Bracelet Designer — app.js  (v5)
+   Crystal Bracelet Designer — app.js  (v6 – real crystal images)
    ══════════════════════════════════════════════════════════ */
+
+// ─── Crystal Image Cache ─────────────────────────────────
+// Pre-load all crystal images so they render instantly on the canvas.
+const crystalImageCache = {};   // key = imgSrc path → HTMLImageElement
+let pendingImageLoads = 0;
+
+function preloadCrystalImage(src) {
+  if (!src || crystalImageCache[src]) return;
+  pendingImageLoads++;
+  const img = new Image();
+  img.src = src;
+  img.onload = () => { pendingImageLoads--; if (pendingImageLoads === 0) drawScene(); };
+  img.onerror = () => { pendingImageLoads--; };
+  crystalImageCache[src] = img;
+}
+
+function preloadAllCrystalImages() {
+  // Will be called after CATEGORIES is defined
+}
 
 // ─── Constants ───────────────────────────────────────────
 const CANVAS_SIZE = 520;
@@ -130,136 +149,160 @@ const CATEGORIES = [
   {
     icon: '💗', zhName: '愛情與人際', enName: 'Love & Relationships',
     crystals: [
-      { zh:'玫瑰石英',   en:'Rose Quartz',          c:['#ffcdd8','#f0859a','#c85070','#ff8aaa','#ffe0e8'] },
-      { zh:'紅紋石',     en:'Rhodochrosite',         c:['#ffaab8','#e06070','#b83050','#ff8090','#ffd0d8'] },
-      { zh:'月光石',     en:'Moonstone',             c:['#f0eaff','#c8c0e8','#9088c8','#e8e4ff','#ffffff'] },
-      { zh:'草莓晶',     en:'Strawberry Quartz',     c:['#ffb0b0','#e87080','#c04060','#ff9090','#ffd8d8'] },
-      { zh:'粉色碧璽',   en:'Pink Tourmaline',       c:['#ffb8e0','#e070b0','#b83888','#ff90c8','#ffd8f0'] },
-      { zh:'粉色蛋白石', en:'Pink Opal',             c:['#ffd8ec','#f8a0c8','#e06898','#ffc0de','#fff0f8'] },
-      { zh:'芙蓉晶',     en:'Pink Crystal',          c:['#fcc8d5','#eda8b8','#d07888','#fcb8c8','#ffe8ee'] },
-      { zh:'摩根石',     en:'Morganite',             c:['#fad8c8','#f0a898','#c87068','#fac8b8','#fff0ea'] },
-      { zh:'菱錳礦',     en:'Rhodonite',             c:['#e8a0b8','#c86890','#a04068','#e890b0','#f8d0e0'] },
-      { zh:'紅玉髓',     en:'Red Carnelian',         c:['#ff9878','#e06040','#b03820','#ff8060','#ffd0c0'] },
-      { zh:'石榴石',     en:'Garnet',                c:['#d04060','#a01828','#700010','#c03050','#f0a8b8'] },
-      { zh:'粉晶髮晶',   en:'Pink Rutilated Quartz', c:['#ffb0c8','#e880a0','#c05078','#ff98b8','#ffd8e8'] },
-      { zh:'天使石',     en:'Angelite',              c:['#c0d8f0','#90b0d8','#5880b8','#b0cce8','#e8f0fa'] },
-      { zh:'孔賽石',     en:'Kunzite',               c:['#e8c0e8','#c090c8','#9060a0','#d8b0d8','#f8e8f8'] },
-      { zh:'錳鋁榴石',   en:'Spessartine Garnet',   c:['#ff9050','#d06020','#a03808','#ff8040','#ffd0a8'] },
-      { zh:'粉色方解石', en:'Pink Calcite',           c:['#ffd0d8','#f8a8b8','#e07888','#ffbccc','#fff0f4'] },
-      { zh:'紅紋瑪瑙',   en:'Red Banded Agate',      c:['#e09090','#c05868','#904050','#d88090','#f0c8cc'] },
-      { zh:'珊瑚',       en:'Coral',                 c:['#ff8878','#e06050','#c04038','#ff7868','#ffd0c8'] },
-      { zh:'珍珠',       en:'Pearl',                 c:['#fefef8','#e8e8e0','#c8c8c0','#f8f8f0','#ffffff'] },
-      { zh:'粉色東菱石', en:'Pink Aventurine',        c:['#ffd8e8','#f8a8c0','#e07898','#ffcade','#fff5f8'] },
+      { zh:'草莓晶',       en:'Strawberry Quartz',         imgSrc:'水晶單顆/草莓晶.png',           c:['#ffb0b0','#e87080','#c04060','#ff9090','#ffd8d8'],
+        zhEffect:'增強愛情運，促進人際和諧，散發個人魅力', enEffect:'Enhances love luck, promotes interpersonal harmony, radiates personal charm' },
+      { zh:'粉月光',       en:'Pink Moonstone',            imgSrc:'水晶單顆/粉月光.png',           c:['#fcd0e0','#e8a0c0','#c07898','#f0b8d0','#fff0f6'],
+        zhEffect:'柔化情緒，增進溫柔氣質，吸引浪漫緣分', enEffect:'Softens emotions, enhances gentle temperament, attracts romantic connections' },
+      { zh:'粉兔毛',       en:'Pink Rabbit Hair Quartz',   imgSrc:'水晶單顆/粉兔毛.png',           c:['#f8c0d0','#e090a8','#c06880','#f0a8c0','#ffe0ea'],
+        zhEffect:'招桃花，增強異性緣，提升自信與親和力', enEffect:'Attracts romance, enhances appeal to others, boosts confidence and affinity' },
+      { zh:'馬達加斯加粉水晶', en:'Madagascar Rose Quartz', imgSrc:'水晶單顆/馬達加斯加粉水晶.png', c:['#fcc8d8','#f0a0b8','#d87898','#f8b8cc','#ffe8f0'],
+        zhEffect:'頂級粉晶，深層療癒感情創傷，開啟心輪之愛', enEffect:'Premium rose quartz, deeply heals emotional wounds, opens heart chakra love' },
+      { zh:'紅膠花',       en:'Red Phantom Quartz',        imgSrc:'水晶單顆/紅膠花.png',           c:['#f0a898','#d87868','#b05040','#e89080','#f8d0c8'],
+        zhEffect:'增添熱情活力，穩固感情關係，激發行動力', enEffect:'Adds passionate vitality, stabilizes relationships, inspires action' },
+      { zh:'紅髮晶',       en:'Red Rutilated Quartz',      imgSrc:'水晶單顆/紅髮晶.png',           c:['#e8a090','#c87060','#a04838','#d89078','#f0c8c0'],
+        zhEffect:'增強魅力與自信，促進血液循環，帶來熱情', enEffect:'Enhances charm and confidence, promotes blood circulation, brings passion' },
+      { zh:'白珍珠',       en:'Pearl',                     imgSrc:'水晶單顆/白珍珠.png',           c:['#fefef8','#e8e8e0','#c8c8c0','#f8f8f0','#ffffff'],
+        zhEffect:'象徵純潔優雅，增進人際關係，安定情緒', enEffect:'Symbolizes purity and elegance, enhances social relationships, calms emotions' },
+      { zh:'白玉髓',       en:'White Chalcedony',          imgSrc:'水晶單顆/白玉髓.png',           c:['#f8f0f0','#e0d8d8','#c0b8b8','#f0e8e8','#ffffff'],
+        zhEffect:'促進人際圓融，增強包容力，改善溝通能力', enEffect:'Promotes interpersonal harmony, enhances tolerance, improves communication' },
+      { zh:'和田白玉',     en:'Hetian White Jade',         imgSrc:'水晶單顆/和田白玉.png',         c:['#f0e8d8','#d8d0c0','#b8b0a0','#e8e0d0','#f8f4ec'],
+        zhEffect:'君子之石，溫潤養心，增強人格魅力與福氣', enEffect:"Gentleman's stone, gently nourishes the heart, enhances personal charm and fortune" },
+      { zh:'白月光',       en:'White Moonstone',           imgSrc:'水晶單顆/白月光.png',           c:['#f0eaff','#d0c8e8','#a8a0d0','#e0d8f0','#ffffff'],
+        zhEffect:'增強直覺與感性，柔化人際互動，平衡情緒', enEffect:'Enhances intuition and sensitivity, softens social interactions, balances emotions' },
+      { zh:'朱砂',         en:'Cinnabar',                  imgSrc:'水晶單顆/朱砂.png',             c:['#e03030','#c01818','#900808','#d02020','#f06060'],
+        zhEffect:'辟邪鎮煞，增強正緣，帶來喜慶吉祥', enEffect:'Wards off evil, enhances positive relationships, brings joy and auspiciousness' },
     ]
   },
   {
     icon: '💰', zhName: '事業與財富', enName: 'Career & Wealth',
     crystals: [
-      { zh:'黃水晶',   en:'Citrine',              c:['#ffe898','#f0c830','#c09800','#ffdf60','#fff8d8'] },
-      { zh:'虎眼石',   en:"Tiger's Eye",           c:['#d0a860','#a07828','#785010','#c09848','#e8d0a8'] },
-      { zh:'綠幽靈',   en:'Green Phantom Quartz',  c:['#a8f0b8','#58d070','#208840','#88e8a0','#d0f8dc'] },
-      { zh:'黃鐵礦',   en:'Pyrite',               c:['#e8d888','#c8b848','#a09020','#ddd078','#f8f0c8'] },
-      { zh:'孔雀石',   en:'Malachite',             c:['#58f0a0','#20c868','#108040','#40e888','#b0f8cc'] },
-      { zh:'翡翠',     en:'Jade (Jadeite)',        c:['#78f0a8','#40d078','#18904a','#60e898','#c0f8d8'] },
-      { zh:'東菱石',   en:'Green Aventurine',      c:['#98e8b0','#58c878','#309050','#80dca0','#c8f0d8'] },
-      { zh:'金髮晶',   en:'Gold Rutilated Quartz', c:['#ffe898','#f0c840','#b89010','#ffd860','#fff0c0'] },
-      { zh:'黃幽靈',   en:'Yellow Phantom Quartz', c:['#f8f090','#e8d850','#c0b020','#f0e870','#fffac0'] },
-      { zh:'橄欖石',   en:'Peridot',              c:['#c8f870','#98e030','#68b010','#b0f050','#e0ffa8'] },
-      { zh:'紅虎眼石', en:"Red Tiger's Eye",      c:['#d08868','#a85838','#804020','#c87858','#e8bca8'] },
-      { zh:'藍虎眼石', en:"Blue Tiger's Eye",     c:['#7898c8','#4870a8','#284880','#6888b8','#b8cce0'] },
-      { zh:'綠碧璽',   en:'Green Tourmaline',      c:['#68e898','#30c868','#108840','#50d888','#a8f8c8'] },
-      { zh:'帝王玉',   en:'Imperial Jade',         c:['#50f0a8','#18d878','#08984a','#38e890','#a0f8d0'] },
-      { zh:'黃玉',     en:'Yellow Topaz',          c:['#fff8b0','#f0e068','#c8b828','#f8f080','#ffffd0'] },
-      { zh:'茶晶',     en:'Smoky Yellow Quartz',   c:['#d8c080','#b09040','#886818','#c8b060','#e8d8a0'] },
-      { zh:'祖母綠',   en:'Emerald',               c:['#28e870','#10b848','#087830','#20d860','#88f4b0'] },
-      { zh:'日長石',   en:'Sunstone',             c:['#ffd8a0','#f8b050','#e88018','#f8c878','#ffeec8'] },
-      { zh:'透輝石',   en:'Diopside',              c:['#68d8a0','#38b070','#187848','#50c888','#a8e8c8'] },
-      { zh:'棕色碧璽', en:'Brown Tourmaline',      c:['#c0a080','#907060','#605040','#b09070','#d8c4a8'] },
+      { zh:'黄水晶',       en:'Citrine',                    imgSrc:'水晶單顆/黄水晶.png',           c:['#ffe898','#f0c830','#c09800','#ffdf60','#fff8d8'],
+        zhEffect:'招正財偏財，增強自信與決斷力，帶來豐盛', enEffect:'Attracts wealth, enhances confidence and decisiveness, brings abundance' },
+      { zh:'金髮晶',       en:'Gold Rutilated Quartz',      imgSrc:'水晶單顆/金髮晶.png',           c:['#ffe898','#f0c840','#b89010','#ffd860','#fff0c0'],
+        zhEffect:'招財聚氣，增強領導力，事業運強力提升', enEffect:'Attracts wealth and energy, enhances leadership, powerfully boosts career luck' },
+      { zh:'金鈦晶',       en:'Gold Titanium Quartz',       imgSrc:'水晶單顆/金钛晶.png',           c:['#ffd870','#e8b030','#c08810','#f0c050','#ffe8a0'],
+        zhEffect:'水晶之王，極強招財能量，增強正財與權勢', enEffect:'King of crystals, extremely powerful wealth energy, enhances fortune and authority' },
+      { zh:'金虎眼',       en:"Gold Tiger's Eye",           imgSrc:'水晶單顆/金虎眼.png',           c:['#d0a860','#a07828','#785010','#c09848','#e8d0a8'],
+        zhEffect:'增強意志力，帶來財運與果斷力，辟邪護身', enEffect:'Strengthens willpower, brings wealth luck and decisiveness, wards off evil' },
+      { zh:'黄虎眼',       en:"Yellow Tiger's Eye",         imgSrc:'水晶單顆/黄虎眼.png',           c:['#d8b868','#b09038','#886818','#c8a850','#e8d898'],
+        zhEffect:'增強洞察力與判斷力，招財護身，穩定情緒', enEffect:"Enhances insight and judgment, attracts wealth, stabilizes emotions" },
+      { zh:'金運石',       en:'Sunstone (Golden)',           imgSrc:'水晶單顆/金運石.png',           c:['#f8c870','#e0a040','#c07818','#f0b858','#fce0a0'],
+        zhEffect:'帶來好運與正能量，提升自信，吸引財富', enEffect:'Brings good luck and positive energy, boosts confidence, attracts wealth' },
+      { zh:'黄塔晶',       en:'Yellow Tower Quartz',        imgSrc:'水晶單顆/黄塔晶.png',           c:['#f8d088','#e0a850','#c08028','#f0c070','#fce8b0'],
+        zhEffect:'聚財穩運，增強個人氣場，提升事業格局', enEffect:'Accumulates wealth and stabilizes luck, enhances personal aura, elevates career vision' },
+      { zh:'黄兔毛',       en:'Yellow Rabbit Hair Quartz',  imgSrc:'水晶單顆/黄兔毛.png',           c:['#f8d898','#e0b868','#c09040','#f0c880','#fce8c0'],
+        zhEffect:'偏財運旺盛，帶來意外之財，增強創造力', enEffect:'Strong windfall luck, brings unexpected fortune, enhances creativity' },
+      { zh:'茶晶',         en:'Smoky Quartz',               imgSrc:'水晶單顆/茶晶.png',             c:['#c8a878','#a08050','#786030','#b89868','#e0c8a0'],
+        zhEffect:'穩定磁場，增強實踐力，幫助落實目標', enEffect:'Stabilizes energy field, enhances execution ability, helps achieve goals' },
+      { zh:'橄欖石',       en:'Peridot',                    imgSrc:'水晶單顆/橄欖石.png',           c:['#c8e890','#98c860','#70a038','#b0d878','#e0f0b8'],
+        zhEffect:'帶來財富與好運，增強行動力，促進事業發展', enEffect:'Brings wealth and fortune, enhances initiative, promotes career development' },
+      { zh:'檸檬黃',       en:'Lemon Quartz',               imgSrc:'水晶單顆/檸檬黃.png',           c:['#f8f0a0','#e8d868','#c8b838','#f0e880','#fffac8'],
+        zhEffect:'活躍思維，帶來樂觀正能量，提升創業運', enEffect:'Activates thinking, brings optimistic energy, boosts entrepreneurial luck' },
+      { zh:'黄膠花',       en:'Yellow Phantom Quartz',      imgSrc:'水晶單顆/黄膠花.png',           c:['#f0d890','#d8b860','#b89838','#e8c878','#f8ecc0'],
+        zhEffect:'穩健聚財，培養耐心，增強長期投資運', enEffect:'Steadily accumulates wealth, cultivates patience, enhances long-term investment luck' },
+      { zh:'黄螢石',       en:'Yellow Fluorite',            imgSrc:'水晶單顆/黄螢石.png',           c:['#f8e898','#e8d060','#c8b030','#f0d878','#fff0c0'],
+        zhEffect:'增強邏輯思維，提升學習效率，帶來靈感', enEffect:'Enhances logical thinking, boosts learning efficiency, brings inspiration' },
     ]
   },
   {
     icon: '🌿', zhName: '平靜與療癒', enName: 'Calm & Healing',
     crystals: [
-      { zh:'紫水晶',    en:'Amethyst',           c:['#d898f8','#9840d8','#681098','#c070e8','#f0c8ff'] },
-      { zh:'藍紋瑪瑙',  en:'Blue Lace Agate',    c:['#b0d8f8','#78a8e0','#4878c0','#98c8f0','#d8ecfc'] },
-      { zh:'海藍寶',    en:'Aquamarine',         c:['#88e8f8','#40c8e0','#1898b8','#68d8f0','#c0f0fa'] },
-      { zh:'白水晶',    en:'Clear Quartz',       c:['#f8f4ff','#e8e0f8','#c8c0e8','#f0ecfc','#ffffff'] },
-      { zh:'葡萄石',    en:'Prehnite',           c:['#c8f0c8','#90d090','#609070','#b0e8b0','#e4f8e4'] },
-      { zh:'藍玉髓',    en:'Blue Chalcedony',    c:['#98d0f0','#60a8d8','#3880b8','#80c0e8','#c8e8f8'] },
-      { zh:'綠松石',    en:'Turquoise',          c:['#48e8d8','#18c0b0','#089888','#30d8c8','#98f0e8'] },
-      { zh:'藍色方解石', en:'Blue Calcite',      c:['#a8c8e8','#7898d0','#5070b0','#98b8e0','#d0e4f4'] },
-      { zh:'霰石',      en:'Aragonite',          c:['#f0d8b0','#c8b088','#a08858','#e0c898','#f8ecd8'] },
-      { zh:'磷灰石',    en:'Apatite',            c:['#48d0d8','#18a8b8','#107898','#38c0cc','#90e8ec'] },
-      { zh:'玉石',      en:'Nephrite Jade',      c:['#88d8a8','#60b880','#389060','#78c898','#bce8d0'] },
-      { zh:'冰種水晶',  en:'Ice Quartz',         c:['#f0f8ff','#d8ecfc','#b8d8f0','#e8f4ff','#ffffff'] },
-      { zh:'矽孔雀石',  en:'Chrysocolla',        c:['#40d8c8','#10b0a0','#088878','#30c8b8','#90e8e0'] },
-      { zh:'紫玉髓',    en:'Purple Chalcedony',  c:['#d8b0f0','#b080d0','#8858a8','#ca98e8','#f0d8fc'] },
-      { zh:'人參石',    en:'Serpentine',         c:['#b0e8b0','#80c880','#589858','#a0d8a0','#d0f0d0'] },
-      { zh:'菊花石',    en:'Chrysanthemum Stone',c:['#e8e0d0','#c8c0b0','#a8a090','#d8d0c0','#f4f0e8'] },
-      { zh:'粉色玉石',  en:'Pink Jade',          c:['#f8d0d8','#e8a0b0','#c87888','#f0bcc8','#fce8ee'] },
-      { zh:'粉色薔薇輝石',en:'Rhodonite (Pink)', c:['#f8b0c8','#e07898','#c05078','#f0a0bc','#fcd8e8'] },
-      { zh:'藍色托帕石', en:'Blue Topaz',        c:['#88c8f8','#4898e0','#2070c0','#78b8f0','#c8e4fc'] },
-      { zh:'蠟石',      en:'Wax Stone',          c:['#f0e8d0','#d8d0b8','#b8b098','#e8e0c8','#f8f4ea'] },
+      { zh:'白水晶',       en:'Clear Quartz',               imgSrc:'水晶單顆/白水晶.png',           c:['#f8f4ff','#e8e0f8','#c8c0e8','#f0ecfc','#ffffff'],
+        zhEffect:'淨化能量場，增強專注力，萬能療癒之石', enEffect:'Purifies energy field, enhances focus, universal healing stone' },
+      { zh:'白兔毛',       en:'White Rabbit Hair Quartz',   imgSrc:'水晶單顆/白兔毛.png',           c:['#f8f0e8','#e8e0d0','#c8c0b0','#f0e8e0','#ffffff'],
+        zhEffect:'淨化心靈雜念，帶來平靜祥和，柔化能量', enEffect:'Purifies mental clutter, brings peaceful serenity, softens energy' },
+      { zh:'白幽靈',       en:'White Phantom Quartz',       imgSrc:'水晶單顆/白幽靈.png',           c:['#f0ece8','#d8d4d0','#b8b4b0','#e8e4e0','#ffffff'],
+        zhEffect:'淨化雜念，提升靈性層次，帶來內心平靜', enEffect:'Purifies stray thoughts, elevates spiritual level, brings inner peace' },
+      { zh:'白螢石',       en:'White Fluorite',             imgSrc:'水晶單顆/白螢石.png',           c:['#f0eef8','#d8d6e0','#b8b6c0','#e8e6f0','#ffffff'],
+        zhEffect:'淨化思緒，增強精神清明，促進身心放鬆', enEffect:'Purifies thoughts, enhances mental clarity, promotes physical and mental relaxation' },
+      { zh:'海藍寶',       en:'Aquamarine',                 imgSrc:'水晶單顆/海藍寶.png',           c:['#a8e0f0','#70c0d8','#4098b8','#90d0e8','#d0f0f8'],
+        zhEffect:'舒緩壓力，增強表達能力，帶來勇氣與平靜', enEffect:'Relieves stress, enhances expression, brings courage and tranquility' },
+      { zh:'藍月光',       en:'Blue Moonstone',             imgSrc:'水晶單顆/藍月光.png',           c:['#c8d8f0','#98b0d8','#6888b8','#b0c8e8','#e0ecf8'],
+        zhEffect:'安定情緒波動，增強直覺力，促進深層放鬆', enEffect:'Calms emotional fluctuations, enhances intuition, promotes deep relaxation' },
+      { zh:'藍托帕',       en:'Blue Topaz',                 imgSrc:'水晶單顆/藍托帕.png',           c:['#88c8f8','#4898e0','#2070c0','#78b8f0','#c8e4fc'],
+        zhEffect:'冷靜思考，增強溝通表達，舒緩焦慮不安', enEffect:'Promotes calm thinking, enhances communication, relieves anxiety' },
+      { zh:'葡萄石',       en:'Prehnite',                   imgSrc:'水晶單顆/葡萄石.png',           c:['#c8e8b8','#98d090','#68a868','#b0d8a0','#e0f0d8'],
+        zhEffect:'希望之石，減輕焦慮，增強包容力與療癒力', enEffect:'Stone of hope, reduces anxiety, enhances tolerance and healing power' },
+      { zh:'綠水晶',       en:'Green Quartz',               imgSrc:'水晶單顆/绿水晶.png',           c:['#a0e8b0','#70c880','#40a058','#88d898','#c8f0d0'],
+        zhEffect:'舒緩壓力，調和心靈，帶來生機與希望', enEffect:'Relieves stress, harmonizes the mind, brings vitality and hope' },
+      { zh:'綠兔毛',       en:'Green Rabbit Hair Quartz',   imgSrc:'水晶單顆/綠兔毛.png',           c:['#c8e8c8','#98c898','#68a068','#b0d8b0','#e0f0e0'],
+        zhEffect:'安撫情緒，促進身心平衡，增強復原力', enEffect:'Soothes emotions, promotes mind-body balance, enhances resilience' },
+      { zh:'綠草莓',       en:'Green Strawberry Quartz',    imgSrc:'水晶單顆/綠草莓.png',           c:['#b0e8b8','#80c888','#58a060','#98d8a0','#d0f0d0'],
+        zhEffect:'滋養心輪，增強同理心，帶來平靜與喜悅', enEffect:'Nourishes heart chakra, enhances empathy, brings peace and joy' },
+      { zh:'天河石',       en:'Amazonite',                  imgSrc:'水晶單顆/天河石.png',           c:['#40c8c0','#18a8a0','#088880','#30b8b0','#80e0d8'],
+        zhEffect:'安撫不安情緒，增強信心與勇氣，平衡能量', enEffect:'Soothes anxiety, enhances confidence and courage, balances energy' },
+      { zh:'白阿賽',       en:'White Azeztulite',           imgSrc:'水晶單顆/白阿塞.png',           c:['#f0ece8','#d8d4d0','#b8b4b0','#e8e4e0','#faf8f6'],
+        zhEffect:'高頻療癒石，淨化並提升身體振動頻率', enEffect:'High-frequency healing stone, purifies and elevates body vibration frequency' },
     ]
   },
   {
     icon: '🛡️', zhName: '辟邪與防護', enName: 'Protection & Warding',
     crystals: [
-      { zh:'黑曜石',    en:'Obsidian',              c:['#605868','#302830','#180818','#504858','#887898'] },
-      { zh:'黑碧璽',    en:'Black Tourmaline',      c:['#504858','#282030','#100810','#403840','#706878'] },
-      { zh:'煙晶',      en:'Smoky Quartz',          c:['#908090','#605860','#404048','#807878','#b0a8b0'] },
-      { zh:'赤鐵礦',    en:'Hematite',              c:['#a0a0a8','#686870','#404048','#909098','#c8c8d0'] },
-      { zh:'拉長石',    en:'Labradorite',           c:['#708aaa','#486090','#284878','#607898','#a0b8cc'] },
-      { zh:'黑瑪瑙',    en:'Black Onyx',            c:['#504860','#281828','#0c080e','#403850','#706870'] },
-      { zh:'黑尖晶石',  en:'Black Spinel',          c:['#484858','#202030','#080c18','#383848','#686878'] },
-      { zh:'彩虹黑曜石', en:'Rainbow Obsidian',     c:['#584880','#301850','#180830','#483870','#7868a0'] },
-      { zh:'雪花黑曜石', en:'Snowflake Obsidian',   c:['#686068','#403840','#180c20','#585058','#988890'] },
-      { zh:'金曜石',    en:'Gold Sheen Obsidian',   c:['#806858','#503820','#280c08','#705848','#a89080'] },
-      { zh:'黑色髮晶',  en:'Black Rutilated Quartz',c:['#504050','#281828','#0c0810','#403040','#706070'] },
-      { zh:'鷹眼石',    en:"Hawk's Eye",            c:['#485870','#283848','#0c1e30','#384858','#688098'] },
-      { zh:'虎鐵石',    en:'Tiger Iron',            c:['#906050','#604028','#402010','#805040','#b09080'] },
-      { zh:'黑膽石',    en:'Jet Stone',             c:['#3c3840','#200e18','#080408','#2c2830','#564e58'] },
-      { zh:'黑色瑪瑙',  en:'Black Agate',           c:['#484050','#24182c','#0c0812','#382c40','#6c6070'] },
-      { zh:'深色石榴石', en:'Dark Garnet',          c:['#701020','#400810','#200004','#600818','#a04060'] },
-      { zh:'磁石',      en:'Magnetite',             c:['#686870','#404048','#202028','#585860','#888890'] },
-      { zh:'隕石',      en:'Meteorite',             c:['#706858','#484030','#281810','#605848','#908070'] },
-      { zh:'電氣石',    en:'Elbaite Tourmaline',    c:['#505060','#282838','#101018','#404050','#706878'] },
-      { zh:'銀灰拉長石', en:'Spectrolite',          c:['#607898','#385878','#183050','#507090','#90aac0'] },
+      { zh:'黑曜石',       en:'Obsidian',                   imgSrc:'水晶單顆/黑曜石.png',           c:['#605868','#302830','#180818','#504858','#887898'],
+        zhEffect:'強力辟邪擋煞，吸收負面能量，保護氣場', enEffect:'Powerful evil warding, absorbs negative energy, protects aura' },
+      { zh:'黑水晶',       en:'Black Quartz (Morion)',      imgSrc:'水晶單顆/黑水晶.png',           c:['#504858','#282030','#100810','#403840','#706878'],
+        zhEffect:'極強防護石，淨化負能量，穩固能量場', enEffect:'Extremely powerful protection stone, purifies negative energy, stabilizes energy field' },
+      { zh:'黑龍晶',       en:'Black Dragon Crystal',       imgSrc:'水晶單顆/黑龍晶.png',           c:['#585058','#302830','#181018','#483840','#787078'],
+        zhEffect:'辟邪化煞，增強意志力，帶來堅韌與力量', enEffect:'Wards off evil, strengthens willpower, brings tenacity and strength' },
+      { zh:'黑金超七',     en:'Black Gold Super Seven',     imgSrc:'水晶單顆/黑金超七.png',         c:['#706050','#483828','#281810','#604830','#988070'],
+        zhEffect:'七種礦物合一，全方位防護，提升靈性覺知', enEffect:'Seven minerals in one, comprehensive protection, elevates spiritual awareness' },
+      { zh:'金曜石',       en:'Gold Sheen Obsidian',        imgSrc:'水晶單顆/金曜石.png',           c:['#806858','#503820','#280c08','#705848','#a89080'],
+        zhEffect:'辟邪招財雙效，反射負能量，增強正氣', enEffect:'Dual effect of warding evil and attracting wealth, reflects negative energy' },
+      { zh:'銀曜石',       en:'Silver Sheen Obsidian',      imgSrc:'水晶單顆/銀曜石.png',           c:['#a0a0a8','#787880','#505058','#909098','#c0c0c8'],
+        zhEffect:'抵禦負面影響，增強鏡面反射力，保護旅行安全', enEffect:'Resists negative influences, enhances mirror reflection power, protects during travel' },
+      { zh:'藍虎眼',       en:"Blue Tiger's Eye",           imgSrc:'水晶單顆/藍虎眼.png',           c:['#3858a8','#203880','#0c2060','#284890','#6888c0'],
+        zhEffect:'增強洞察力，冷靜應對危機，防護負面能量', enEffect:'Enhances insight, calmly faces crises, protects against negative energy' },
+      { zh:'雪花幽靈',     en:'Snowflake Phantom Quartz',   imgSrc:'水晶單顆/雪花幽靈.png',         c:['#e8e4e0','#c8c4c0','#a09898','#d8d4d0','#f8f4f0'],
+        zhEffect:'淨化負面能量，促進心靈寧靜，增強保護力', enEffect:'Purifies negative energy, promotes spiritual tranquility, enhances protection' },
+      { zh:'銀髮晶',       en:'Silver Rutilated Quartz',    imgSrc:'水晶單顆/銀髮晶.png',           c:['#d0d0d0','#a8a8a8','#787878','#c0c0c0','#e8e8e8'],
+        zhEffect:'辟邪化煞，增強能量防護罩，淨化磁場', enEffect:'Wards off evil, enhances energy shield, purifies magnetic field' },
     ]
   },
   {
     icon: '🔮', zhName: '智慧與靈性', enName: 'Wisdom & Spirituality',
     crystals: [
-      { zh:'青金石',    en:'Lapis Lazuli',       c:['#3858d8','#1830b0','#081880','#2848c8','#7888f0'] },
-      { zh:'螢石',      en:'Fluorite',           c:['#b868e8','#7828d0','#4808a0','#9848d8','#d8a0f8'] },
-      { zh:'天青石',    en:'Celestite',          c:['#98c8f0','#68a0d8','#3878b8','#88b8e8','#c8dff8'] },
-      { zh:'舒俱徠石',  en:'Sugilite',           c:['#b840c8','#8018a0','#500870','#a030b8','#d880e0'] },
-      { zh:'紫龍晶',    en:'Charoite',           c:['#9858c8','#6830a8','#400880','#8848b8','#c090e0'] },
-      { zh:'紫鋰輝石',  en:'Lepidolite',         c:['#c898e0','#a070c8','#7848a0','#b888d8','#e0c0f0'] },
-      { zh:'藍晶石',    en:'Kyanite',            c:['#4878d0','#2058b0','#0c3890','#3868c0','#88a0e0'] },
-      { zh:'透石膏',    en:'Selenite',           c:['#f8f4f0','#e8e0d8','#c8c0b8','#f0ece8','#ffffff'] },
-      { zh:'紫色螢石',  en:'Purple Fluorite',    c:['#a050e0','#7020c0','#480890','#9040d0','#c888f0'] },
-      { zh:'坦桑石',    en:'Tanzanite',          c:['#3848d0','#1828b0','#081088','#2838c0','#7880e8'] },
-      { zh:'星光藍寶石', en:'Star Sapphire',     c:['#2858b0','#0e3888','#0c2870','#1e4898','#6888c8'] },
-      { zh:'蘇打石',    en:'Sodalite',           c:['#3058b8','#183898','#082880','#2848a8','#6888d0'] },
-      { zh:'莫爾達維石', en:'Moldavite',          c:['#38b860','#18904a','#086030','#28a850','#78d898'] },
-      { zh:'彩虹螢石',  en:'Rainbow Fluorite',   c:['#c070e8','#9040d0','#6018a0','#b060d8','#e098f8'] },
-      { zh:'紫黃晶',    en:'Ametrine',           c:['#e0c070','#c0a840','#a08018','#d0b858','#f0d8a0'] },
-      { zh:'彩虹月光石', en:'Rainbow Moonstone', c:['#e8e0ff','#c8c0f0','#a098e0','#d8d0fc','#f8f4ff'] },
-      { zh:'白紋石',    en:'Howlite',            c:['#f0ecf8','#d8d4e8','#b8b0d0','#e8e4f4','#ffffff'] },
-      { zh:'藍色藍晶石', en:'Blue Kyanite',      c:['#4880d8','#2060b8','#0c4098','#3870c8','#80a8e0'] },
-      { zh:'紫色方解石', en:'Purple Calcite',    c:['#d8a8f0','#b078d8','#8848b0','#c898e8','#ecccfc'] },
-      { zh:'銀線方鉛礦', en:'Galena',            c:['#909898','#606868','#383e40','#808888','#b0b8b8'] },
+      { zh:'巴西紫水晶',   en:'Brazilian Amethyst',         imgSrc:'水晶單顆/巴西紫水晶.png',       c:['#d8a0f0','#a860d0','#7830a8','#c080e0','#f0c8ff'],
+        zhEffect:'開發智慧，增強直覺力，提升靈性修行', enEffect:'Develops wisdom, enhances intuition, elevates spiritual practice' },
+      { zh:'烏拉圭紫水晶', en:'Uruguayan Amethyst',         imgSrc:'水晶單顆/烏拉圭紫水晶.png',     c:['#8838b8','#6018a0','#380878','#7828a8','#b868d8'],
+        zhEffect:'頂級紫水晶，極強靈性能量，深度冥想之石', enEffect:'Premium amethyst, extremely strong spiritual energy, deep meditation stone' },
+      { zh:'玻利維亞紫水晶', en:'Bolivian Amethyst',         imgSrc:'水晶單顆/玻利維亞紫水晶.png',   c:['#c888e0','#9858c0','#6830a0','#b070d0','#e0b0f0'],
+        zhEffect:'稀有紫水晶，增強靈性覺知，連結高維能量', enEffect:'Rare amethyst, enhances spiritual awareness, connects to higher-dimensional energy' },
+      { zh:'超七',         en:'Super Seven',                imgSrc:'水晶單顆/超七.png',             c:['#c090d0','#9060a8','#603880','#a878c0','#d8b8e0'],
+        zhEffect:'七種礦物合一，全方位能量提升，開啟靈性天賦', enEffect:'Seven minerals in one, comprehensive energy boost, unlocks spiritual gifts' },
+      { zh:'極光23',       en:'Aurora 23 (Auralite)',       imgSrc:'水晶單顆/極光23.png',           c:['#c898c8','#9868a8','#684080','#b080b8','#e0c0e0'],
+        zhEffect:'23種礦物共生，極強靈性振動，促進意識覺醒', enEffect:'23 minerals coexisting, extremely strong spiritual vibration, promotes consciousness awakening' },
+      { zh:'紫黃晶',       en:'Ametrine',                   imgSrc:'水晶單顆/紫黃晶.png',           c:['#e0c080','#c8a050','#a07828','#d8b060','#f0d8a0'],
+        zhEffect:'智慧與財富兼具，平衡左右腦，增強創造力', enEffect:'Combines wisdom and wealth, balances left and right brain, enhances creativity' },
+      { zh:'綠幽靈',       en:'Green Phantom Quartz',       imgSrc:'水晶單顆/綠幽靈.png',           c:['#a8e8b8','#70c880','#40a050','#90d8a0','#d0f0d8'],
+        zhEffect:'事業之石，助冥想觀想，提升靈性覺知', enEffect:'Career stone, aids meditation and visualization, elevates spiritual awareness' },
+      { zh:'綠髮晶',       en:'Green Rutilated Quartz',     imgSrc:'水晶單顆/綠髮晶.png',           c:['#a0d8a0','#78b878','#509850','#90c890','#c8e8c8'],
+        zhEffect:'增強正財運，提升直覺力，促進身心靈平衡', enEffect:'Enhances wealth luck, boosts intuition, promotes mind-body-spirit balance' },
+      { zh:'綠龍晶',       en:'Seraphinite',                imgSrc:'水晶單顆/綠龍晶.png',           c:['#80c890','#58a068','#389048','#70b880','#a0e0b0'],
+        zhEffect:'天使之石，深層療癒心輪，連結高靈指引', enEffect:'Angel stone, deeply heals heart chakra, connects to higher spiritual guidance' },
+      { zh:'四季幽靈',     en:'Four Seasons Phantom Quartz',imgSrc:'水晶單顆/四季幽靈.png',         c:['#c0a880','#a08858','#806838','#b09870','#d8c8a8'],
+        zhEffect:'四季能量循環，全方位提升運勢，增強冥想', enEffect:'Four seasons energy cycle, comprehensively boosts fortune, enhances meditation' },
+      { zh:'聚寶盆綠幽靈', en:'Treasure Basin Green Phantom',imgSrc:'水晶單顆/聚寶盆綠幽靈.png',    c:['#90d0a0','#60b070','#389848','#78c088','#b8e0c0'],
+        zhEffect:'聚財聚靈，增強冥想深度，連結大地能量', enEffect:'Gathers wealth and spirit, deepens meditation, connects to earth energy' },
+      { zh:'孔雀石',       en:'Malachite',                  imgSrc:'水晶單顆/孔雀石.png',           c:['#38c878','#18a050','#087838','#28b868','#80e0a0'],
+        zhEffect:'心靈之石，增強洞察力，促進靈性成長與轉化', enEffect:'Stone of the mind, enhances insight, promotes spiritual growth and transformation' },
     ]
   }
 ];
 
 // ─── Accessories ─────────────────────────────────────────
 const ACCESSORIES = [
-  { zh:'純銀', en:'Sterling Silver', c:['#f8f8f8','#d8d8d8','#a8a8a8','#e8e8e8','#ffffff'] },
-  { zh:'合金', en:'Alloy',           c:['#d8c898','#b8a868','#988848','#c8b888','#f0e8c8'] },
-  { zh:'鋯石', en:'Zircon',          c:['#f0f8ff','#c8e0f8','#90b8e8','#e0f0ff','#ffffff'] },
+  { zh:'合金配飾', en:'Alloy Accessory', imgSrc:'配飾/配飾3.png', customMm: 5, lengthMm: 8, c:['#f0f8ff','#c8e0f8','#90b8e8','#e0f0ff','#ffffff'] },
 ];
+
+// ─── Preload all crystal images at startup ───────────────
+CATEGORIES.forEach(cat => {
+  cat.crystals.forEach(crystal => {
+    if (crystal.imgSrc) preloadCrystalImage(crystal.imgSrc);
+  });
+});
+ACCESSORIES.forEach(acc => {
+  if (acc.imgSrc) preloadCrystalImage(acc.imgSrc);
+});
 
 // ─── State ───────────────────────────────────────────────
 let wristCm      = 16;
@@ -267,10 +310,46 @@ let globalBeadMm = 8;
 let beads        = [];   // [{ crystalKey, customMm, type }]  type: 'crystal'|'accessory'
 let beadPositions= [];   // [{x,y,r}]  cached per draw
 let totalSlots   = 0;    // total slots for current wrist+bead config
+const TIGHT_FIT  = 0.86; // Snug fit factor to make beads look strung together
 
 let dragIndex      = null;
 let hoverBeadIndex = null;
 let contextBeadIndex = null;
+
+// Helper to get placement radius (distance from center).
+// Crystals rest on the inner wrist circle.
+// Accessories are elevated to align their centerlines with adjacent crystals.
+function getBeadRplacement(i) {
+  const innerR = getInnerCircleRadiusPx();
+  const S = getPixelsPerMm();
+  const isAccessory = beads[i].crystalKey.startsWith('acc-');
+  
+  if (!isAccessory) {
+    const mm = beads[i].customMm ?? globalBeadMm;
+    return innerR + (mm / 2) * S;
+  }
+  
+  let leftR = null, rightR = null;
+  for (let j = i - 1; j >= 0; j--) {
+    if (!beads[j].crystalKey.startsWith('acc-')) {
+      const mm = beads[j].customMm ?? globalBeadMm;
+      leftR = innerR + (mm / 2) * S;
+      break;
+    }
+  }
+  for (let j = i + 1; j < beads.length; j++) {
+    if (!beads[j].crystalKey.startsWith('acc-')) {
+      const mm = beads[j].customMm ?? globalBeadMm;
+      rightR = innerR + (mm / 2) * S;
+      break;
+    }
+  }
+  
+  if (leftR !== null && rightR !== null) return (leftR + rightR) / 2;
+  if (leftR !== null) return leftR;
+  if (rightR !== null) return rightR;
+  return innerR + (globalBeadMm / 2) * S;
+}
 
 // crystal key = `${catIdx}-${crystalIdx}` or `acc-${accIdx}`
 function getCrystalByKey(key) {
@@ -292,11 +371,10 @@ function beadRadiusPx(bead) {
 }
 
 function calcBeadCount(circumCm, beadMm) {
-  // Physics: beads touch each other on the circle just outside the inner ring.
-  // Bead-centre circumference = inner_circum + π × bead_diam
-  // N = floor( (inner_circum + π × bead_diam) / bead_diam )
-  //   = floor( inner_circum / bead_diam  +  π )
-  return Math.max(1, Math.floor((circumCm * 10) / beadMm + Math.PI));
+  // Beads sit on a circle whose circumference ≈ wrist circumference.
+  // We want beads nearly touching, so count = circumference / bead_diameter.
+  // Use floor to ensure they fit; the slight leftover is absorbed as tiny gaps.
+  return Math.max(1, Math.floor((circumCm * 10) / beadMm));
 }
 
 // ─── Arc-contact bead layout ─────────────────────────────
@@ -324,16 +402,16 @@ function computeBeadPositions() {
   for (let i = 0; i < beads.length; i++) {
     const mm   = beads[i].customMm ?? globalBeadMm;
     const r    = (mm / 2) * S;
-    const Rplacement = innerR + r;   // centre of this bead from canvas-centre
+    const Rplacement = getBeadRplacement(i);
     filledAngles.push({ angle, Rplacement, r });
 
     if (i < beads.length - 1) {
-      // Compute step toward next bead
+      // Compute step toward next bead — tightened so beads nearly touch
       const mmNext = beads[i + 1].customMm ?? globalBeadMm;
       const rNext  = (mmNext / 2) * S;
-      const Rnext  = innerR + rNext;
+      const Rnext  = getBeadRplacement(i + 1);
       const Rmid   = (Rplacement + Rnext) / 2;  // average radius
-      const dAngle = (r + rNext) / Rmid;         // arc-contact angle step
+      const dAngle = (r + rNext) / Rmid * TIGHT_FIT;
       angle += dAngle;
     }
   }
@@ -368,6 +446,7 @@ function computeBeadPositions() {
       x: CX + Rplacement * Math.cos(a),
       y: CY + Rplacement * Math.sin(a),
       r,
+      a,
       filled: true
     });
   });
@@ -453,107 +532,167 @@ function drawEmptySlot(x, y, r) {
   ctx.restore();
 }
 
-// ─── Draw: Realistic Crystal Bead ────────────────────────
-function drawCrystalBead(x, y, r, colors, isHover, isDragging) {
-  const [cLight, cMid, cDark, cSpec, cRim] = colors;
+// ─── Draw: Crystal Bead (image-based with gradient fallback) ─
+function drawCrystalBead(x, y, r, colors, isHover, isDragging, imgSrc, angle = 0, isAccessory = false, accLengthMm = null) {
+  const cachedImg = imgSrc ? crystalImageCache[imgSrc] : null;
+  const useImage = cachedImg && cachedImg.complete && cachedImg.naturalWidth > 0;
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.clip();
+  if (useImage) {
+    ctx.save();
 
-  // Layer 1: base dark fill
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = cDark;
-  ctx.fill();
+    if (isAccessory) {
+      // Accessories don't use circular clip and are rotated to face the center.
+      // Add 90 degrees (Math.PI / 2) so the short edge centerline points to the center.
+      ctx.translate(x, y);
+      ctx.rotate(angle + Math.PI / 2);
+      
+      const drawW = r * 2; // customMm * scale (the short edge)
+      let drawH = drawW;
+      if (accLengthMm) {
+        // Enforce the exact physical length (long edge)
+        const S = getPixelsPerMm();
+        drawH = accLengthMm * S;
+      } else {
+        // Fallback to image aspect ratio if no length is specified
+        const imgW = cachedImg.naturalWidth;
+        const imgH = cachedImg.naturalHeight;
+        drawH = drawW * (imgH / imgW);
+      }
+      
+      ctx.drawImage(cachedImg, -drawW / 2, -drawH / 2, drawW, drawH);
+    } else {
+      // Drop shadow behind the bead
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.shadowColor = 'rgba(0,0,0,0.50)';
+      ctx.shadowBlur = r * 0.7;
+      ctx.shadowOffsetX = r * 0.12;
+      ctx.shadowOffsetY = r * 0.18;
+      ctx.fillStyle = 'rgba(0,0,0,0)';
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
 
-  // Layer 2: main volumetric gradient
-  const mainGrad = ctx.createRadialGradient(
-    x - r * 0.30, y - r * 0.32, r * 0.02,
-    x + r * 0.28, y + r * 0.32, r * 1.15
-  );
-  mainGrad.addColorStop(0,   cLight);
-  mainGrad.addColorStop(0.38, cMid);
-  mainGrad.addColorStop(0.72, cDark);
-  mainGrad.addColorStop(1,   '#000000');
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = mainGrad;
-  ctx.fill();
+      // Clip to circle
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.clip();
 
-  // Layer 3: Subsurface scattering
-  const subGrad = ctx.createRadialGradient(
-    x - r * 0.05, y + r * 0.08, 0,
-    x - r * 0.05, y + r * 0.08, r * 0.78
-  );
-  subGrad.addColorStop(0,   cLight + 'aa');
-  subGrad.addColorStop(0.4, cLight + '30');
-  subGrad.addColorStop(1,   'transparent');
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = subGrad;
-  ctx.globalAlpha = 0.45;
-  ctx.fill();
-  ctx.globalAlpha = 1;
+      // Draw image — crystal PNGs have ~8% transparent padding around the bead.
+      // Scale up by 1.15x so the visible crystal fills the clip circle snugly.
+      const imgScale = 1.15;
+      const drawSize = r * 2 * imgScale;
+      const offset = r * imgScale;
+      ctx.drawImage(cachedImg, x - offset, y - offset, drawSize, drawSize);
 
-  // Layer 4: Diffuse primary highlight
-  const diff = ctx.createRadialGradient(
-    x - r * 0.35, y - r * 0.38, 0,
-    x - r * 0.35, y - r * 0.38, r * 0.72
-  );
-  diff.addColorStop(0,   'rgba(255,255,255,0.82)');
-  diff.addColorStop(0.25,'rgba(255,255,255,0.48)');
-  diff.addColorStop(0.60,'rgba(255,255,255,0.12)');
-  diff.addColorStop(1,   'rgba(255,255,255,0)');
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = diff;
-  ctx.fill();
+      // Subtle rim highlight for depth
+      const rimGrad = ctx.createRadialGradient(x, y, r * 0.85, x, y, r);
+      rimGrad.addColorStop(0, 'rgba(255,255,255,0)');
+      rimGrad.addColorStop(0.7, 'rgba(255,255,255,0)');
+      rimGrad.addColorStop(1, 'rgba(255,255,255,0.10)');
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = rimGrad;
+      ctx.fill();
+    }
 
-  // Layer 5: Rim light
-  const rimGrad = ctx.createRadialGradient(
-    x + r * 0.55, y + r * 0.52, r * 0.3,
-    x, y, r
-  );
-  rimGrad.addColorStop(0,   'rgba(255,255,255,0)');
-  rimGrad.addColorStop(0.75,'rgba(255,255,255,0)');
-  rimGrad.addColorStop(1,   'rgba(255,255,255,0.18)');
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = rimGrad;
-  ctx.fill();
+    ctx.restore();
+  } else {
+    // ── Fallback: gradient bead (for accessories or failed images) ──
+    const [cLight, cMid, cDark, cSpec, cRim] = colors;
 
-  // Layer 6: Pinpoint specular
-  const specSize = r * 0.11;
-  const specGrd = ctx.createRadialGradient(
-    x - r * 0.28, y - r * 0.32, 0,
-    x - r * 0.28, y - r * 0.32, specSize * 1.6
-  );
-  specGrd.addColorStop(0,   'rgba(255,255,255,1)');
-  specGrd.addColorStop(0.4, 'rgba(255,255,255,0.8)');
-  specGrd.addColorStop(1,   'rgba(255,255,255,0)');
-  ctx.beginPath();
-  ctx.arc(x - r * 0.28, y - r * 0.32, specSize * 1.6, 0, Math.PI * 2);
-  ctx.fillStyle = specGrd;
-  ctx.fill();
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.clip();
 
-  ctx.restore(); // End clip
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = cDark;
+    ctx.fill();
 
-  // Drop shadow
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(x + r * 0.15, y + r * 0.22, r * 0.88, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,0)';
-  ctx.shadowColor  = 'rgba(0,0,0,0.65)';
-  ctx.shadowBlur   = r * 0.9;
-  ctx.shadowOffsetX = r * 0.18;
-  ctx.shadowOffsetY = r * 0.25;
-  ctx.arc(x + r * 0.05, y + r * 0.10, r * 0.9, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+    const mainGrad = ctx.createRadialGradient(
+      x - r * 0.30, y - r * 0.32, r * 0.02,
+      x + r * 0.28, y + r * 0.32, r * 1.15
+    );
+    mainGrad.addColorStop(0,   cLight);
+    mainGrad.addColorStop(0.38, cMid);
+    mainGrad.addColorStop(0.72, cDark);
+    mainGrad.addColorStop(1,   '#000000');
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = mainGrad;
+    ctx.fill();
 
-  // Hover ring
+    const subGrad = ctx.createRadialGradient(
+      x - r * 0.05, y + r * 0.08, 0,
+      x - r * 0.05, y + r * 0.08, r * 0.78
+    );
+    subGrad.addColorStop(0,   cLight + 'aa');
+    subGrad.addColorStop(0.4, cLight + '30');
+    subGrad.addColorStop(1,   'transparent');
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = subGrad;
+    ctx.globalAlpha = 0.45;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    const diff = ctx.createRadialGradient(
+      x - r * 0.35, y - r * 0.38, 0,
+      x - r * 0.35, y - r * 0.38, r * 0.72
+    );
+    diff.addColorStop(0,   'rgba(255,255,255,0.82)');
+    diff.addColorStop(0.25,'rgba(255,255,255,0.48)');
+    diff.addColorStop(0.60,'rgba(255,255,255,0.12)');
+    diff.addColorStop(1,   'rgba(255,255,255,0)');
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = diff;
+    ctx.fill();
+
+    const rimGrad = ctx.createRadialGradient(
+      x + r * 0.55, y + r * 0.52, r * 0.3,
+      x, y, r
+    );
+    rimGrad.addColorStop(0,   'rgba(255,255,255,0)');
+    rimGrad.addColorStop(0.75,'rgba(255,255,255,0)');
+    rimGrad.addColorStop(1,   'rgba(255,255,255,0.18)');
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = rimGrad;
+    ctx.fill();
+
+    const specSize = r * 0.11;
+    const specGrd = ctx.createRadialGradient(
+      x - r * 0.28, y - r * 0.32, 0,
+      x - r * 0.28, y - r * 0.32, specSize * 1.6
+    );
+    specGrd.addColorStop(0,   'rgba(255,255,255,1)');
+    specGrd.addColorStop(0.4, 'rgba(255,255,255,0.8)');
+    specGrd.addColorStop(1,   'rgba(255,255,255,0)');
+    ctx.beginPath();
+    ctx.arc(x - r * 0.28, y - r * 0.32, specSize * 1.6, 0, Math.PI * 2);
+    ctx.fillStyle = specGrd;
+    ctx.fill();
+
+    ctx.restore();
+
+    // Drop shadow
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x + r * 0.15, y + r * 0.22, r * 0.88, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0)';
+    ctx.shadowColor  = 'rgba(0,0,0,0.65)';
+    ctx.shadowBlur   = r * 0.9;
+    ctx.shadowOffsetX = r * 0.18;
+    ctx.shadowOffsetY = r * 0.25;
+    ctx.arc(x + r * 0.05, y + r * 0.10, r * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Hover ring (works for both image and fallback)
   if (isHover || isDragging) {
     ctx.save();
     ctx.beginPath();
@@ -604,29 +743,29 @@ function drawScene() {
     let consumedArc = 0;
     if (beads.length === 1) {
       const r  = ((beads[0].customMm ?? globalBeadMm) / 2) * S;
-      const RP = innerR + r;
+      const RP = getBeadRplacement(0);
       consumedArc = 2 * r / RP;   // one bead: diameter arc
     } else if (beads.length > 1) {
       let arcAcc = 0;
       for (let i = 0; i < beads.length - 1; i++) {
         const mm  = beads[i].customMm ?? globalBeadMm;
         const r   = (mm / 2) * S;
-        const RP  = innerR + r;
+        const RP  = getBeadRplacement(i);
         const mmN = beads[i + 1].customMm ?? globalBeadMm;
         const rN  = (mmN / 2) * S;
-        const RPN = innerR + rN;
-        arcAcc += (r + rN) / ((RP + RPN) / 2);
+        const RPN = getBeadRplacement(i + 1);
+        arcAcc += (r + rN) / ((RP + RPN) / 2) * TIGHT_FIT;
       }
       // Add half-arc for first and last bead ends
       const rFirst = ((beads[0].customMm ?? globalBeadMm) / 2) * S;
-      const RFirst  = innerR + rFirst;
+      const RFirst  = getBeadRplacement(0);
       const rLast  = ((beads[beads.length-1].customMm ?? globalBeadMm) / 2) * S;
-      const RLast   = innerR + rLast;
+      const RLast   = getBeadRplacement(beads.length - 1);
       consumedArc = arcAcc + rFirst / RFirst + rLast / RLast;
     }
 
     const leftoverArc = Math.max(0, 2 * Math.PI - consumedArc);
-    const arcPerEmpty = (2 * defaultR) / defaultRP;   // arc for one default bead
+    const arcPerEmpty = (2 * defaultR) / defaultRP * TIGHT_FIT;  // tightened arc per empty bead
     const emptySlots  = arcPerEmpty > 0 ? Math.floor(leftoverArc / arcPerEmpty) : 0;
     totalSlots = beads.length + emptySlots;
   }
@@ -646,8 +785,9 @@ function drawScene() {
   drawAllShadows();
   beadPositions.forEach((p, i) => {
     if (!p.filled) return;
+    const isAccessory = beads[i].crystalKey.startsWith('acc-');
     const crystal = getCrystalByKey(beads[i].crystalKey);
-    drawCrystalBead(p.x, p.y, p.r, crystal.c, hoverBeadIndex === i, dragIndex === i);
+    drawCrystalBead(p.x, p.y, p.r, crystal.c, hoverBeadIndex === i, dragIndex === i, crystal.imgSrc, p.a, isAccessory, crystal.lengthMm);
   });
   updateStats();
 }
@@ -668,24 +808,24 @@ function computeMaxBeads() {
   let consumedArc = 0;
   if (beads.length === 1) {
     const r  = ((beads[0].customMm ?? globalBeadMm) / 2) * S;
-    const RP = innerR + r;
+    const RP = getBeadRplacement(0);
     consumedArc = 2 * r / RP;
   } else if (beads.length > 1) {
     let arcAcc = 0;
     for (let i = 0; i < beads.length - 1; i++) {
       const r  = ((beads[i].customMm ?? globalBeadMm) / 2) * S;
-      const RP = innerR + r;
+      const RP = getBeadRplacement(i);
       const rN = ((beads[i+1].customMm ?? globalBeadMm) / 2) * S;
-      const RN = innerR + rN;
-      arcAcc  += (r + rN) / ((RP + RN) / 2);
+      const RN = getBeadRplacement(i + 1);
+      arcAcc  += (r + rN) / ((RP + RN) / 2) * TIGHT_FIT;
     }
     const rF  = ((beads[0].customMm ?? globalBeadMm) / 2) * S;
     const rL  = ((beads[beads.length-1].customMm ?? globalBeadMm) / 2) * S;
-    consumedArc = arcAcc + rF / (innerR + rF) + rL / (innerR + rL);
+    consumedArc = arcAcc + rF / getBeadRplacement(0) + rL / getBeadRplacement(beads.length - 1);
   }
 
   const leftover = Math.max(0, 2 * Math.PI - consumedArc);
-  const arcPerDefault = (2 * defaultR) / defaultRP;
+  const arcPerDefault = (2 * defaultR) / defaultRP * TIGHT_FIT;
   return beads.length + (arcPerDefault > 0 ? Math.floor(leftover / arcPerDefault) : 0);
 }
 
@@ -760,12 +900,41 @@ function buildSidePanel() {
       item.className = 'crystal-item';
       item.id = `crystal-${key}`;
 
-      item.appendChild(makeSVGBead(crystal.c, 28));
+      // Use crystal image if available, fallback to SVG bead
+      if (crystal.imgSrc) {
+        const imgWrap = document.createElement('div');
+        imgWrap.className = 'crystal-img-wrap';
+        const img = document.createElement('img');
+        img.src = crystal.imgSrc;
+        img.alt = currentLang === 'zh' ? crystal.zh : crystal.en;
+        img.className = 'crystal-img-preview';
+        img.loading = 'lazy';
+        img.onerror = function() {
+          // Fallback to SVG bead if image fails
+          this.parentElement.replaceWith(makeSVGBead(crystal.c, 28));
+        };
+        imgWrap.appendChild(img);
+        item.appendChild(imgWrap);
+      } else {
+        item.appendChild(makeSVGBead(crystal.c, 28));
+      }
+
+      const textWrap = document.createElement('div');
+      textWrap.className = 'crystal-text-wrap';
 
       const nameSpan = document.createElement('span');
       nameSpan.className = 'crystal-name';
       nameSpan.textContent = currentLang === 'zh' ? crystal.zh : crystal.en;
-      item.appendChild(nameSpan);
+      textWrap.appendChild(nameSpan);
+
+      if (crystal.zhEffect) {
+        const effectSpan = document.createElement('span');
+        effectSpan.className = 'crystal-effect';
+        effectSpan.textContent = currentLang === 'zh' ? crystal.zhEffect : crystal.enEffect;
+        textWrap.appendChild(effectSpan);
+      }
+
+      item.appendChild(textWrap);
 
       item.addEventListener('click', () => addCrystal(key));
       list.appendChild(item);
@@ -793,7 +962,22 @@ function buildSidePanel() {
     item.className = 'crystal-item accessory-item';
     item.id = `accessory-${ai}`;
 
-    item.appendChild(makeSVGBead(acc.c, 28));
+    if (acc.imgSrc) {
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'crystal-img-wrap';
+      const img = document.createElement('img');
+      img.src = acc.imgSrc;
+      img.alt = currentLang === 'zh' ? acc.zh : acc.en;
+      img.className = 'crystal-img-preview';
+      img.loading = 'lazy';
+      img.onerror = function() {
+        this.parentElement.replaceWith(makeSVGBead(acc.c, 28));
+      };
+      imgWrap.appendChild(img);
+      item.appendChild(imgWrap);
+    } else {
+      item.appendChild(makeSVGBead(acc.c, 28));
+    }
 
     const nameSpan = document.createElement('span');
     nameSpan.className = 'crystal-name';
@@ -896,7 +1080,8 @@ function addCrystal(key) {
     setTimeout(() => canvas.style.outline = '', 700);
     return;
   }
-  beads.push({ crystalKey: key, customMm: null });
+  const crystalInfo = getCrystalByKey(key);
+  beads.push({ crystalKey: key, customMm: crystalInfo.customMm || null });
   drawScene();
 }
 
@@ -1063,14 +1248,14 @@ function isOverLimitByArc() {
   let arcAcc = 0;
   for (let i = 0; i < beads.length - 1; i++) {
     const r  = ((beads[i].customMm ?? globalBeadMm) / 2) * S;
-    const RP = innerR + r;
+    const RP = getBeadRplacement(i);
     const rN = ((beads[i+1].customMm ?? globalBeadMm) / 2) * S;
-    const RN = innerR + rN;
-    arcAcc += (r + rN) / ((RP + RN) / 2);
+    const RN = getBeadRplacement(i + 1);
+    arcAcc += (r + rN) / ((RP + RN) / 2) * TIGHT_FIT;
   }
   const rF = ((beads[0].customMm ?? globalBeadMm) / 2) * S;
   const rL = ((beads[beads.length-1].customMm ?? globalBeadMm) / 2) * S;
-  const consumedArc = arcAcc + rF / (innerR + rF) + rL / (innerR + rL);
+  const consumedArc = arcAcc + rF / getBeadRplacement(0) + rL / getBeadRplacement(beads.length - 1);
   return consumedArc > 2 * Math.PI;
 }
 
