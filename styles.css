@@ -969,16 +969,14 @@ input[type=range]::-webkit-slider-thumb:active {
 
   /* ── Main: vertical stack ── */
   #main {
+    display: flex;
     flex-direction: column;
     overflow: visible;
   }
 
-  /* ── Hide guide panel & stats panel on mobile ── */
-  #leftHintOuter { display: none; }
-  #statsPanel { display: none; }
-
-  /* ── Canvas Section: sticky at top ── */
+  /* ── Canvas Section: sticky at top (order 1) ── */
   #canvasSection {
+    order: 1;
     position: sticky;
     top: 0;
     z-index: 40;
@@ -1006,16 +1004,17 @@ input[type=range]::-webkit-slider-thumb:active {
     min-height: 36px;
   }
 
-  /* ── Side Panel: full-width scrollable below canvas ── */
+  /* ── Side Panel (Crystal Selection): order 2 ── */
   #sidePanel {
+    order: 2;
     width: 100%;
     border-left: none;
-    border-top: 1px solid var(--border);
-    overflow-y: auto;
+    border-bottom: 1px solid var(--border);
+    overflow-y: visible; /* Let it flow normally */
     overflow-x: hidden;
     padding: 10px 12px;
     max-height: none;
-    flex: 1;
+    flex: none;
   }
 
   /* Dropdown bodies: static flow instead of absolute overlay */
@@ -1027,6 +1026,28 @@ input[type=range]::-webkit-slider-thumb:active {
     margin-top: 2px;
   }
   .cat-body.open { max-height: 500px; }
+
+  /* ── Stats Panel: order 3 ── */
+  #statsPanel {
+    order: 3;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 250px;
+  }
+
+  /* ── Guide Panel: order 4 ── */
+  #leftHintOuter {
+    order: 4;
+    width: 100%;
+  }
+  #leftHint {
+    width: 100%;
+    border-right: none;
+  }
+  #leftToggleBtn {
+    display: none; /* Hide the toggle button on mobile */
+  }
 
   /* Touch-friendly sizes (min 44px tap targets) */
   .cat-header { min-height: 44px; padding: 10px 12px; }
