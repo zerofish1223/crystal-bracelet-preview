@@ -614,6 +614,42 @@ input[type=range]::-webkit-slider-thumb:active {
   box-shadow: -2px 0 12px rgba(120,80,30,0.05);
 }
 
+/* ─── Browse Mode Toggle ──────────────────────────────── */
+#browseToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-warm);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  overflow: hidden;
+  margin: 2px 4px 8px;
+  box-shadow: var(--shadow-card);
+}
+.browse-btn {
+  flex: 1;
+  padding: 6px 10px;
+  font-family: var(--f-brand);
+  font-size: 0.74rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide);
+  color: var(--text-muted);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: all 0.25s;
+  white-space: nowrap;
+}
+.browse-btn.active {
+  background: linear-gradient(135deg, var(--gold), #c08a18);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(170,120,32,0.3);
+}
+.browse-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background: rgba(170,120,32,0.06);
+}
+
 #sidePanel::-webkit-scrollbar { width: 4px; }
 #sidePanel::-webkit-scrollbar-track { background: transparent; }
 #sidePanel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }

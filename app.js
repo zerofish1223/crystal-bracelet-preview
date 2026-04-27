@@ -59,6 +59,66 @@ function getBeadCenterRadius() {
   return getInnerCircleRadiusPx() + (globalBeadMm / 2) * getPixelsPerMm();
 }
 
+// ─── Browse Mode ─────────────────────────────────────────
+let browseMode = 'effect';  // 'effect' or 'color'
+
+// Color-based categories: each maps to crystal keys from CATEGORIES
+const COLOR_CATEGORIES = [
+  { icon:'🔴', zhName:'紅／粉', enName:'Red / Pink',
+    match: c => { const h=hexAvgHue(c); const s=hexAvgSat(c); return (h<=15||h>=340) && s>20 || (h>300&&h<340&&s>15); } },
+  { icon:'🟠', zhName:'橙／黃', enName:'Orange / Yellow',
+    match: c => { const h=hexAvgHue(c); const s=hexAvgSat(c); return h>15&&h<=65&&s>20; } },
+  { icon:'🟢', zhName:'綠／青', enName:'Green / Teal',
+    match: c => { const h=hexAvgHue(c); const s=hexAvgSat(c); return h>65&&h<=185&&s>15; } },
+  { icon:'🔵', zhName:'藍／紫', enName:'Blue / Purple',
+    match: c => { const h=hexAvgHue(c); const s=hexAvgSat(c); return h>185&&h<=300&&s>15; } },
+  { icon:'⚫', zhName:'黑／白', enName:'Black / White',
+    match: c => { const s=hexAvgSat(c); return s<=20; } },
+];
+
+function hexToHSL(hex) {
+  hex = hex.replace('#','');
+  if (hex.length===3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  const r=parseInt(hex.substring(0,2),16)/255, g=parseInt(hex.substring(2,4),16)/255, b=parseInt(hex.substring(4,6),16)/255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
+  let h=0, s=0, l=(max+min)/2;
+  if(d!==0){ s=l>0.5?d/(2-max-min):d/(max+min); switch(max){case r:h=((g-b)/d+(g<b?6:0))*60;break;case g:h=((b-r)/d+2)*60;break;case b:h=((r-g)/d+4)*60;break;} }
+  return {h,s:s*100,l:l*100};
+}
+function hexAvgHue(colors) {
+  let sx=0,sy=0; colors.forEach(c=>{const {h}=hexToHSL(c); sx+=Math.cos(h*Math.PI/180); sy+=Math.sin(h*Math.PI/180);});
+  let a=Math.atan2(sy,sx)*180/Math.PI; if(a<0)a+=360; return a;
+}
+function hexAvgSat(colors) {
+  return colors.reduce((sum,c)=>sum+hexToHSL(c).s,0)/colors.length;
+}
+
+// Build color category crystal lists (called once after CATEGORIES defined)
+let colorCatCrystals = []; // filled after CATEGORIES is defined
+function buildColorCatCrystals() {
+  colorCatCrystals = COLOR_CATEGORIES.map((cc, ccIdx) => {
+    const list = [];
+    CATEGORIES.forEach((cat, ci) => {
+      cat.crystals.forEach((crystal, ki) => {
+        // Manual override via colorCat property takes priority
+        if (crystal.colorCat !== undefined) {
+          if (crystal.colorCat === ccIdx) list.push({ ci, ki, crystal });
+        } else {
+          if (cc.match(crystal.c)) list.push({ ci, ki, crystal });
+        }
+      });
+    });
+    return list;
+  });
+}
+
+function setBrowseMode(mode) {
+  browseMode = mode;
+  document.getElementById('btnEffect')?.classList.toggle('active', mode === 'effect');
+  document.getElementById('btnColor')?.classList.toggle('active', mode === 'color');
+  buildSidePanel();
+}
+
 // ─── i18n ────────────────────────────────────────────────
 const I18N = {
   zh: {
@@ -70,6 +130,9 @@ const I18N = {
     ctxTitle:    '珠子調整',
     ctxRemove:   '✕ 移除此珠子',
     catNames:    ['愛情與人際','事業與財富','平靜與療癒','辟邪與防護','智慧與靈性'],
+    colorCatNames: ['紅／粉','橙／黃','綠／青','藍／紫','黑／白'],
+    browseEffect: '功效',
+    browseColor:  '顏色',
     overLimit:   '超過手圍上限，請調整手圍或移除其他水晶',
     statsTitle:  '已放置水晶',
     statsPieces: '顆',
@@ -96,6 +159,9 @@ const I18N = {
     ctxTitle:    'Bead Settings',
     ctxRemove:   '✕ Remove this bead',
     catNames:    ['Love & Relationships','Career & Wealth','Calm & Healing','Protection & Warding','Wisdom & Spirituality'],
+    colorCatNames: ['Red / Pink','Orange / Yellow','Green / Teal','Blue / Purple','Black / White'],
+    browseEffect: 'Effect',
+    browseColor:  'Color',
     overLimit:   'Exceeds wrist limit. Adjust wrist size or remove other beads.',
     statsTitle:  'Beads on bracelet',
     statsPieces: 'pcs',
@@ -161,13 +227,13 @@ const CATEGORIES = [
         zhEffect:'增添熱情活力，穩固感情關係，激發行動力', enEffect:'Adds passionate vitality, stabilizes relationships, inspires action' },
       { zh:'紅髮晶',       en:'Red Rutilated Quartz',      imgSrc:'水晶單顆/紅髮晶.png',           c:['#e8a090','#c87060','#a04838','#d89078','#f0c8c0'],
         zhEffect:'增強魅力與自信，促進血液循環，帶來熱情', enEffect:'Enhances charm and confidence, promotes blood circulation, brings passion' },
-      { zh:'白珍珠',       en:'Pearl',                     imgSrc:'水晶單顆/白珍珠.png',           c:['#fefef8','#e8e8e0','#c8c8c0','#f8f8f0','#ffffff'],
+      { zh:'白珍珠',       en:'Pearl',                     imgSrc:'水晶單顆/白珍珠.png',           c:['#fefef8','#e8e8e0','#c8c8c0','#f8f8f0','#ffffff'], colorCat:4,
         zhEffect:'象徵純潔優雅，增進人際關係，安定情緒', enEffect:'Symbolizes purity and elegance, enhances social relationships, calms emotions' },
       { zh:'白玉髓',       en:'White Chalcedony',          imgSrc:'水晶單顆/白玉髓.png',           c:['#f8f0f0','#e0d8d8','#c0b8b8','#f0e8e8','#ffffff'],
         zhEffect:'促進人際圓融，增強包容力，改善溝通能力', enEffect:'Promotes interpersonal harmony, enhances tolerance, improves communication' },
-      { zh:'和田白玉',     en:'Hetian White Jade',         imgSrc:'水晶單顆/和田白玉.png',         c:['#f0e8d8','#d8d0c0','#b8b0a0','#e8e0d0','#f8f4ec'],
+      { zh:'和田白玉',     en:'Hetian White Jade',         imgSrc:'水晶單顆/和田白玉.png',         c:['#f0e8d8','#d8d0c0','#b8b0a0','#e8e0d0','#f8f4ec'], colorCat:4,
         zhEffect:'君子之石，溫潤養心，增強人格魅力與福氣', enEffect:"Gentleman's stone, gently nourishes the heart, enhances personal charm and fortune" },
-      { zh:'白月光',       en:'White Moonstone',           imgSrc:'水晶單顆/白月光.png',           c:['#f0eaff','#d0c8e8','#a8a0d0','#e0d8f0','#ffffff'],
+      { zh:'白月光',       en:'White Moonstone',           imgSrc:'水晶單顆/白月光.png',           c:['#f0eaff','#d0c8e8','#a8a0d0','#e0d8f0','#ffffff'], colorCat:4,
         zhEffect:'增強直覺與感性，柔化人際互動，平衡情緒', enEffect:'Enhances intuition and sensitivity, softens social interactions, balances emotions' },
       { zh:'朱砂',         en:'Cinnabar',                  imgSrc:'水晶單顆/朱砂.png',             c:['#e03030','#c01818','#900808','#d02020','#f06060'],
         zhEffect:'辟邪鎮煞，增強正緣，帶來喜慶吉祥', enEffect:'Wards off evil, enhances positive relationships, brings joy and auspiciousness' },
@@ -207,13 +273,13 @@ const CATEGORIES = [
   {
     icon: '🌿', zhName: '平靜與療癒', enName: 'Calm & Healing',
     crystals: [
-      { zh:'白水晶',       en:'Clear Quartz',               imgSrc:'水晶單顆/白水晶.png',           c:['#f8f4ff','#e8e0f8','#c8c0e8','#f0ecfc','#ffffff'],
+      { zh:'白水晶',       en:'Clear Quartz',               imgSrc:'水晶單顆/白水晶.png',           c:['#f8f4ff','#e8e0f8','#c8c0e8','#f0ecfc','#ffffff'], colorCat:4,
         zhEffect:'淨化能量場，增強專注力，萬能療癒之石', enEffect:'Purifies energy field, enhances focus, universal healing stone' },
       { zh:'白兔毛',       en:'White Rabbit Hair Quartz',   imgSrc:'水晶單顆/白兔毛.png',           c:['#f8f0e8','#e8e0d0','#c8c0b0','#f0e8e0','#ffffff'],
         zhEffect:'淨化心靈雜念，帶來平靜祥和，柔化能量', enEffect:'Purifies mental clutter, brings peaceful serenity, softens energy' },
       { zh:'白幽靈',       en:'White Phantom Quartz',       imgSrc:'水晶單顆/白幽靈.png',           c:['#f0ece8','#d8d4d0','#b8b4b0','#e8e4e0','#ffffff'],
         zhEffect:'淨化雜念，提升靈性層次，帶來內心平靜', enEffect:'Purifies stray thoughts, elevates spiritual level, brings inner peace' },
-      { zh:'白螢石',       en:'White Fluorite',             imgSrc:'水晶單顆/白螢石.png',           c:['#f0eef8','#d8d6e0','#b8b6c0','#e8e6f0','#ffffff'],
+      { zh:'白螢石',       en:'White Fluorite',             imgSrc:'水晶單顆/白螢石.png',           c:['#f0eef8','#d8d6e0','#b8b6c0','#e8e6f0','#ffffff'], colorCat:4,
         zhEffect:'淨化思緒，增強精神清明，促進身心放鬆', enEffect:'Purifies thoughts, enhances mental clarity, promotes physical and mental relaxation' },
       { zh:'海藍寶',       en:'Aquamarine',                 imgSrc:'水晶單顆/海藍寶.png',           c:['#a8e0f0','#70c0d8','#4098b8','#90d0e8','#d0f0f8'],
         zhEffect:'舒緩壓力，增強表達能力，帶來勇氣與平靜', enEffect:'Relieves stress, enhances expression, brings courage and tranquility' },
@@ -238,9 +304,9 @@ const CATEGORIES = [
   {
     icon: '🛡️', zhName: '辟邪與防護', enName: 'Protection & Warding',
     crystals: [
-      { zh:'黑曜石',       en:'Obsidian',                   imgSrc:'水晶單顆/黑曜石.png',           c:['#605868','#302830','#180818','#504858','#887898'],
+      { zh:'黑曜石',       en:'Obsidian',                   imgSrc:'水晶單顆/黑曜石.png',           c:['#605868','#302830','#180818','#504858','#887898'], colorCat:4,
         zhEffect:'強力辟邪擋煞，吸收負面能量，保護氣場', enEffect:'Powerful evil warding, absorbs negative energy, protects aura' },
-      { zh:'黑水晶',       en:'Black Quartz (Morion)',      imgSrc:'水晶單顆/黑水晶.png',           c:['#504858','#282030','#100810','#403840','#706878'],
+      { zh:'黑碧璽共生',   en:'Black Tourmaline Symbiosis', imgSrc:'水晶單顆/黑水晶.png',           c:['#504858','#282030','#100810','#403840','#706878'], colorCat:4,
         zhEffect:'極強防護石，淨化負能量，穩固能量場', enEffect:'Extremely powerful protection stone, purifies negative energy, stabilizes energy field' },
       { zh:'黑龍晶',       en:'Black Dragon Crystal',       imgSrc:'水晶單顆/黑龍晶.png',           c:['#585058','#302830','#181018','#483840','#787078'],
         zhEffect:'辟邪化煞，增強意志力，帶來堅韌與力量', enEffect:'Wards off evil, strengthens willpower, brings tenacity and strength' },
@@ -858,14 +924,68 @@ beadSizeSelect.addEventListener('change', () => {
 updateWristDisplay();
 
 // ─── Side Panel ──────────────────────────────────────────
+
+// Helper: build a single crystal item element
+function buildCrystalItem(crystal, key) {
+  const item = document.createElement('div');
+  item.className = 'crystal-item';
+  item.id = `crystal-${key}`;
+
+  if (crystal.imgSrc) {
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'crystal-img-wrap';
+    const img = document.createElement('img');
+    img.src = crystal.imgSrc;
+    img.alt = currentLang === 'zh' ? crystal.zh : crystal.en;
+    img.className = 'crystal-img-preview';
+    img.loading = 'lazy';
+    img.onerror = function() {
+      this.parentElement.replaceWith(makeSVGBead(crystal.c, 28));
+    };
+    imgWrap.appendChild(img);
+    item.appendChild(imgWrap);
+  } else {
+    item.appendChild(makeSVGBead(crystal.c, 28));
+  }
+
+  const textWrap = document.createElement('div');
+  textWrap.className = 'crystal-text-wrap';
+
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'crystal-name';
+  nameSpan.textContent = currentLang === 'zh' ? crystal.zh : crystal.en;
+  textWrap.appendChild(nameSpan);
+
+  if (crystal.zhEffect) {
+    const effectSpan = document.createElement('span');
+    effectSpan.className = 'crystal-effect';
+    effectSpan.textContent = currentLang === 'zh' ? crystal.zhEffect : crystal.enEffect;
+    textWrap.appendChild(effectSpan);
+  }
+
+  item.appendChild(textWrap);
+  item.addEventListener('click', () => addCrystal(key));
+  return item;
+}
+
 function buildSidePanel() {
-  const panel  = document.getElementById('sidePanel');
-  const names  = I18N[currentLang].catNames;
-  // Preserve open states
-  const opens  = CATEGORIES.map((_, ci) =>
+  const panel = document.getElementById('sidePanel');
+  // Preserve open states (use generic prefix so both modes work)
+  const maxCats = Math.max(CATEGORIES.length, COLOR_CATEGORIES.length);
+  const opens = Array.from({length: maxCats}, (_, ci) =>
     document.getElementById(`cat-body-${ci}`)?.classList.contains('open') ?? false
   );
   panel.innerHTML = '';
+
+  // ── Browse mode toggle ──
+  const modeToggle = document.createElement('div');
+  modeToggle.id = 'browseToggle';
+  modeToggle.setAttribute('role', 'group');
+  modeToggle.setAttribute('aria-label', 'Browse mode');
+  modeToggle.innerHTML = `
+    <button class="browse-btn${browseMode==='effect'?' active':''}" id="btnEffect" onclick="setBrowseMode('effect')">${t('browseEffect')}</button>
+    <button class="browse-btn${browseMode==='color'?' active':''}" id="btnColor" onclick="setBrowseMode('color')">${t('browseColor')}</button>`;
+  panel.appendChild(modeToggle);
 
   // ── Section title: 水晶 ──
   const crystalTitle = document.createElement('div');
@@ -873,80 +993,76 @@ function buildSidePanel() {
   crystalTitle.textContent = t('sectionCrystal');
   panel.appendChild(crystalTitle);
 
-  CATEGORIES.forEach((cat, ci) => {
-    const block  = document.createElement('div');
-    block.className = 'category-block';
+  if (browseMode === 'effect') {
+    // ── Effect-based categories ──
+    const names = I18N[currentLang].catNames;
+    CATEGORIES.forEach((cat, ci) => {
+      const block = document.createElement('div');
+      block.className = 'category-block';
 
-    const header = document.createElement('div');
-    header.className = 'cat-header' + (opens[ci] ? ' open' : '');
-    header.id = `cat-header-${ci}`;
-    header.innerHTML = `
-      <span class="cat-icon">${cat.icon}</span>
-      <span class="cat-name">${names[ci]}</span>
-      <span class="cat-count">${cat.crystals.length}</span>
-      <span class="cat-chevron">▼</span>`;
+      const header = document.createElement('div');
+      header.className = 'cat-header' + (opens[ci] ? ' open' : '');
+      header.id = `cat-header-${ci}`;
+      header.innerHTML = `
+        <span class="cat-icon">${cat.icon}</span>
+        <span class="cat-name">${names[ci]}</span>
+        <span class="cat-count">${cat.crystals.length}</span>
+        <span class="cat-chevron">▼</span>`;
 
-    // Floating dropdown body
-    const body = document.createElement('div');
-    body.className = 'cat-body' + (opens[ci] ? ' open' : '');
-    body.id = `cat-body-${ci}`;
+      const body = document.createElement('div');
+      body.className = 'cat-body' + (opens[ci] ? ' open' : '');
+      body.id = `cat-body-${ci}`;
 
-    const list = document.createElement('div');
-    list.className = 'crystal-list';
+      const list = document.createElement('div');
+      list.className = 'crystal-list';
 
-    cat.crystals.forEach((crystal, ki) => {
-      const key  = `${ci}-${ki}`;
-      const item = document.createElement('div');
-      item.className = 'crystal-item';
-      item.id = `crystal-${key}`;
+      cat.crystals.forEach((crystal, ki) => {
+        list.appendChild(buildCrystalItem(crystal, `${ci}-${ki}`));
+      });
 
-      // Use crystal image if available, fallback to SVG bead
-      if (crystal.imgSrc) {
-        const imgWrap = document.createElement('div');
-        imgWrap.className = 'crystal-img-wrap';
-        const img = document.createElement('img');
-        img.src = crystal.imgSrc;
-        img.alt = currentLang === 'zh' ? crystal.zh : crystal.en;
-        img.className = 'crystal-img-preview';
-        img.loading = 'lazy';
-        img.onerror = function() {
-          // Fallback to SVG bead if image fails
-          this.parentElement.replaceWith(makeSVGBead(crystal.c, 28));
-        };
-        imgWrap.appendChild(img);
-        item.appendChild(imgWrap);
-      } else {
-        item.appendChild(makeSVGBead(crystal.c, 28));
-      }
+      body.appendChild(list);
+      block.appendChild(header);
+      block.appendChild(body);
+      panel.appendChild(block);
 
-      const textWrap = document.createElement('div');
-      textWrap.className = 'crystal-text-wrap';
-
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'crystal-name';
-      nameSpan.textContent = currentLang === 'zh' ? crystal.zh : crystal.en;
-      textWrap.appendChild(nameSpan);
-
-      if (crystal.zhEffect) {
-        const effectSpan = document.createElement('span');
-        effectSpan.className = 'crystal-effect';
-        effectSpan.textContent = currentLang === 'zh' ? crystal.zhEffect : crystal.enEffect;
-        textWrap.appendChild(effectSpan);
-      }
-
-      item.appendChild(textWrap);
-
-      item.addEventListener('click', () => addCrystal(key));
-      list.appendChild(item);
+      header.addEventListener('click', () => toggleCategory(ci));
     });
+  } else {
+    // ── Color-based categories ──
+    const colorNames = I18N[currentLang].colorCatNames;
+    COLOR_CATEGORIES.forEach((cc, ci) => {
+      const crystals = colorCatCrystals[ci] || [];
+      const block = document.createElement('div');
+      block.className = 'category-block';
 
-    body.appendChild(list);
-    block.appendChild(header);
-    block.appendChild(body);
-    panel.appendChild(block);
+      const header = document.createElement('div');
+      header.className = 'cat-header' + (opens[ci] ? ' open' : '');
+      header.id = `cat-header-${ci}`;
+      header.innerHTML = `
+        <span class="cat-icon">${cc.icon}</span>
+        <span class="cat-name">${colorNames[ci]}</span>
+        <span class="cat-count">${crystals.length}</span>
+        <span class="cat-chevron">▼</span>`;
 
-    header.addEventListener('click', () => toggleCategory(ci));
-  });
+      const body = document.createElement('div');
+      body.className = 'cat-body' + (opens[ci] ? ' open' : '');
+      body.id = `cat-body-${ci}`;
+
+      const list = document.createElement('div');
+      list.className = 'crystal-list';
+
+      crystals.forEach(({ ci: catIdx, ki, crystal }) => {
+        list.appendChild(buildCrystalItem(crystal, `${catIdx}-${ki}`));
+      });
+
+      body.appendChild(list);
+      block.appendChild(header);
+      block.appendChild(body);
+      panel.appendChild(block);
+
+      header.addEventListener('click', () => toggleCategory(ci));
+    });
+  }
 
   // ── Section title: 配飾 ──
   const accTitle = document.createElement('div');
@@ -1055,15 +1171,16 @@ function makeSVGBead(colors, size) {
 }
 
 function toggleCategory(ci) {
-  // Close all others first
-  CATEGORIES.forEach((_, i) => {
+  // Close all others first — count based on current browse mode
+  const count = browseMode === 'effect' ? CATEGORIES.length : COLOR_CATEGORIES.length;
+  for (let i = 0; i < count; i++) {
     if (i !== ci) {
       const h = document.getElementById(`cat-header-${i}`);
       const b = document.getElementById(`cat-body-${i}`);
       if (h) h.classList.remove('open');
       if (b) b.classList.remove('open');
     }
-  });
+  }
   const header = document.getElementById(`cat-header-${ci}`);
   const body   = document.getElementById(`cat-body-${ci}`);
   const open   = body.classList.contains('open');
@@ -1325,6 +1442,7 @@ function toggleLeftPanel() {
 }
 
 // ─── Init ────────────────────────────────────────────────
+buildColorCatCrystals();
 applyI18n();
 buildSidePanel();
 updateWristDisplay();
