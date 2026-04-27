@@ -102,7 +102,12 @@ html, body {
   box-shadow: 0 1px 12px rgba(120,80,30,0.10);
   z-index: 50;
   flex-shrink: 0;
+  justify-content: center;
 }
+
+/* Push controls to center by giving logo and langToggle equal flex basis */
+#topbar #logo { margin-right: auto; }
+#topbar #langToggle { margin-left: auto; }
 
 #logo {
   font-family: var(--f-brand);
@@ -114,7 +119,6 @@ html, body {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   white-space: nowrap;
-  margin-right: 6px;
 }
 
 .ctrl-group {
@@ -190,7 +194,6 @@ input[type=range]::-webkit-slider-thumb:active {
 
 /* Language toggle */
 #langToggle {
-  margin-left: auto;
   display: flex;
   align-items: center;
   background: var(--bg-panel);

@@ -160,7 +160,7 @@ const I18N = {
     ctxRemove:   '✕ Remove this bead',
     catNames:    ['Love & Relationships','Career & Wealth','Calm & Healing','Protection & Warding','Wisdom & Spirituality'],
     colorCatNames: ['Red / Pink','Orange / Yellow','Green / Teal','Blue / Purple','Black / White'],
-    browseEffect: 'Effect',
+    browseEffect: 'Manifest',
     browseColor:  'Color',
     overLimit:   'Exceeds wrist limit. Adjust wrist size or remove other beads.',
     statsTitle:  'Beads on bracelet',
