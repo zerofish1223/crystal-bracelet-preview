@@ -76,7 +76,10 @@ html, body {
   font-family: var(--f-body);
   font-size: var(--ts-base);
   line-height: var(--lh-normal);
-  overflow: hidden;
+}
+/* Desktop: lock viewport to prevent scroll */
+@media (min-width: 1025px) {
+  html, body { overflow: hidden; }
 }
 
 
@@ -476,6 +479,7 @@ input[type=range]::-webkit-slider-thumb:active {
   display: block;
   cursor: crosshair;
   filter: drop-shadow(0 12px 40px rgba(60,30,10,0.35)) drop-shadow(0 4px 12px rgba(60,30,10,0.25));
+  touch-action: none;  /* prevent browser gestures on the canvas */
 }
 
 /* Hint below canvas */
@@ -938,35 +942,126 @@ input[type=range]::-webkit-slider-thumb:active {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ─── Mobile / Responsive ──────────────────────────────── */
-@media (max-width: 768px) {
-  :root { font-size: 15px; }
+/* ═══════════════════════════════════════════════════════════
+   Mobile / Tablet  (≤ 1024px)  — Responsive Layout
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
 
+  /* ── App Shell: vertical stack ── */
+  #app {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;  /* dynamic viewport height for mobile browsers */
+  }
+
+  /* ── Top Bar: compact ── */
   #topbar {
-    gap: 10px;
+    gap: 8px;
     padding: 8px 12px;
     flex-wrap: wrap;
   }
-
-  #logo { font-size: 0.96rem; }
-
+  #logo { font-size: 0.92rem; }
   .ctrl-group { padding: 5px 10px; }
-
-  .ctrl-label { font-size: 0.70rem; }
-  .ctrl-value { font-size: 0.82rem; min-width: 68px; }
-
+  .ctrl-label { font-size: 0.72rem; }
+  .ctrl-value { font-size: 0.82rem; min-width: 64px; }
   input[type=range] { width: 80px; }
-
-  #leftHint { width: 140px; }
-  #leftHint.collapsed { width: 34px; }
-
-  #leftHintHeader { padding: 8px 8px 5px; }
-  .lh-panel-title { font-size: 0.66rem; }
-  .lh-step span:last-child { font-size: 0.67rem; }
-
-  #sidePanel { width: 240px; }
-  .cat-name { font-size: 0.80rem; }
-  .crystal-name { font-size: 0.76rem; }
-
   #beadSizeSelect { font-size: 0.80rem; }
+
+  /* ── Main: vertical stack ── */
+  #main {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  /* ── Hide guide panel & stats panel on mobile ── */
+  #leftHintOuter { display: none; }
+  #statsPanel { display: none; }
+
+  /* ── Canvas Section: sticky at top ── */
+  #canvasSection {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding: 12px 8px 0;
+    flex: none;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 16px rgba(120,80,30,0.10);
+  }
+
+  #braceletCanvas {
+    width: min(85vw, 340px);
+    height: min(85vw, 340px);
+  }
+
+  #canvasBottom {
+    min-height: auto;
+    padding-bottom: 8px;
+  }
+  #canvasHint { font-size: 0.65rem; margin-top: 4px; }
+  #clearTrayBtn {
+    margin-top: 6px;
+    padding: 6px 24px;
+    font-size: 0.76rem;
+    min-height: 36px;
+  }
+
+  /* ── Side Panel: full-width scrollable below canvas ── */
+  #sidePanel {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px 12px;
+    max-height: none;
+    flex: 1;
+  }
+
+  /* Dropdown bodies: static flow instead of absolute overlay */
+  .category-block { position: static; }
+  .cat-body {
+    position: static;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(90,48,144,0.14);
+    margin-top: 2px;
+  }
+  .cat-body.open { max-height: 500px; }
+
+  /* Touch-friendly sizes (min 44px tap targets) */
+  .cat-header { min-height: 44px; padding: 10px 12px; }
+  .crystal-item { min-height: 44px; padding: 8px 12px; }
+  .browse-btn { min-height: 38px; font-size: 0.78rem; }
+  .lang-btn { min-height: 36px; padding: 6px 14px; }
+  .ctx-remove { min-height: 44px; }
+}
+
+/* ── Extra small phones (≤ 480px) ── */
+@media (max-width: 480px) {
+  :root { font-size: 15px; }
+
+  #topbar { gap: 6px; padding: 6px 8px; }
+  #logo { display: none; }  /* hide logo on very small screens to save space */
+  #topbar #logo { margin-right: 0; }
+
+  .ctrl-group { gap: 6px; padding: 4px 8px; }
+  .ctrl-value { min-width: 56px; font-size: 0.78rem; }
+  input[type=range] { width: 60px; }
+
+  #braceletCanvas {
+    width: min(92vw, 300px);
+    height: min(92vw, 300px);
+  }
+
+  .cat-name { font-size: 0.80rem; }
+  .crystal-name { font-size: 0.78rem; }
+  .crystal-effect { font-size: 0.62rem; }
+
+  /* Context menu: center on screen */
+  #contextMenu {
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+    max-width: 90vw;
+  }
 }

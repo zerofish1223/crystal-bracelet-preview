@@ -1292,6 +1292,79 @@ canvas.addEventListener('contextmenu', e => {
   if (idx >= 0) showContextMenu(e.clientX, e.clientY, idx);
 });
 
+// ─── Touch Events (Mobile / Tablet) ──────────────────────
+let touchLongPressTimer = null;
+let touchStartBeadIdx = -1;
+let touchDidDrag = false;
+
+function canvasTouch(e) {
+  const touch = e.touches[0] || e.changedTouches[0];
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = CANVAS_SIZE / rect.width;
+  const scaleY = CANVAS_SIZE / rect.height;
+  return {
+    x: (touch.clientX - rect.left) * scaleX,
+    y: (touch.clientY - rect.top)  * scaleY,
+    clientX: touch.clientX,
+    clientY: touch.clientY
+  };
+}
+
+canvas.addEventListener('touchstart', e => {
+  const { x, y, clientX, clientY } = canvasTouch(e);
+  const idx = getBeadAt(x, y);
+  touchDidDrag = false;
+  clearTimeout(touchLongPressTimer);
+
+  if (idx >= 0) {
+    // Finger is on a bead — start drag & long-press detection
+    e.preventDefault();  // prevent scroll ONLY when touching a bead
+    dragIndex = idx;
+    touchStartBeadIdx = idx;
+    hoverBeadIndex = idx;
+    drawScene();
+
+    // Long-press: show context menu after 500ms if finger hasn't moved
+    touchLongPressTimer = setTimeout(() => {
+      if (!touchDidDrag && dragIndex !== null) {
+        dragIndex = null;
+        hoverBeadIndex = null;
+        drawScene();
+        showContextMenu(clientX, clientY, touchStartBeadIdx);
+      }
+    }, 500);
+  } else {
+    hideContextMenu();
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  if (dragIndex === null) return;
+  e.preventDefault();  // prevent scroll while dragging
+  touchDidDrag = true;
+  clearTimeout(touchLongPressTimer);  // cancel long-press if finger moved
+
+  const { x, y } = canvasTouch(e);
+  const newIdx = getBeadAt(x, y);
+  if (newIdx >= 0 && newIdx !== dragIndex) {
+    [beads[dragIndex], beads[newIdx]] = [beads[newIdx], beads[dragIndex]];
+    dragIndex = newIdx;
+    hoverBeadIndex = newIdx;
+    drawScene();
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  clearTimeout(touchLongPressTimer);
+  if (dragIndex !== null) {
+    dragIndex = null;
+    hoverBeadIndex = null;
+    drawScene();
+  }
+  touchStartBeadIdx = -1;
+  touchDidDrag = false;
+});
+
 // ─── Tooltip ──────────────────────────────────────────────
 const tooltip = document.getElementById('beadTooltip');
 function showTooltip(cx, cy, idx) {
